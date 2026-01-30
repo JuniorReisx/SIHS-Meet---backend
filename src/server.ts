@@ -14,18 +14,18 @@ dotenv.config();
 
 const server = express();
 
-// ✅ Configuração melhorada do CORS
+// Configuração do CORS
 const allowedOrigins = [
   'https://sihsmeeting.vercel.app',
-  'http://localhost:5173', // Vite dev
-  'http://localhost:3000', // CRA dev
-  process.env.CORS_ORIGIN // Origem adicional do env
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CORS_ORIGIN
 ].filter(Boolean);
 
 server.use(
   cors({
     origin: (origin, callback) => {
-      // Permite requisições sem origin (como mobile apps, Postman)
+      // Permite requisições sem origin (mobile apps, Postman)
       if (!origin) return callback(null, true);
       
       // Permite origins na whitelist
@@ -43,8 +43,8 @@ server.use(
   })
 );
 
-// ✅ Adiciona handler explícito para preflight
-server.options('*', cors());
+// ✅ REMOVA esta linha que está causando o erro:
+// server.options('*', cors());
 
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
@@ -82,6 +82,7 @@ server.get("/health", (req: Request, res: Response) => {
   });
 });
 
+// Rotas
 server.use("/api/meetingsConfirmed", meetingsConfirmedRouter);
 server.use("/api/meetingsPending", meetingsPendingRouter);
 server.use("/api/meetingsDenied", meetingsDeniedRouter);
@@ -90,6 +91,7 @@ server.use("/api/admin", adminRouter);
 server.use("/api/users", userRouter);
 server.use("/api/ldap", authRouter);
 
+// 404 handler
 server.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -99,6 +101,7 @@ server.use((req: Request, res: Response) => {
   });
 });
 
+// Error handler
 server.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("❌ Erro não tratado:", err);
 
