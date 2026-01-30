@@ -8,18 +8,44 @@ import { authRouter } from "./routes/auth.routes";
 import { meetingsConfirmedRouter } from "./routes/meetingsConfirmed.routes";
 import { meetingsPendingRouter } from "./routes/meetingsPending.routes";
 import { meetingsDeniedRouter } from "./routes/meetingsDenied.routes";
-import { meetingsTotalRouter } from "./routes/meetingsTotal.routes"; // ✅ ADICIONE ISSO
+import { meetingsTotalRouter } from "./routes/meetingsTotal.routes";
 
 dotenv.config();
 
 const server = express();
 
+// ✅ Configuração melhorada do CORS
+const allowedOrigins = [
+  'https://sihsmeeting.vercel.app',
+  'http://localhost:5173', // Vite dev
+  'http://localhost:3000', // CRA dev
+  process.env.CORS_ORIGIN // Origem adicional do env
+].filter(Boolean);
+
 server.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (como mobile apps, Postman)
+      if (!origin) return callback(null, true);
+      
+      // Permite origins na whitelist
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`❌ CORS bloqueado para origem: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range']
   })
 );
+
+// ✅ Adiciona handler explícito para preflight
+server.options('*', cors());
+
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
@@ -45,6 +71,10 @@ server.get("/health", (req: Request, res: Response) => {
     message: "Servidor rodando",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
+    cors: {
+      allowedOrigins: allowedOrigins,
+      configured: !!process.env.CORS_ORIGIN
+    },
     services: {
       ldap: process.env.LDAP_URL ? "configurado" : "não configurado",
       supabase: process.env.SUPABASE_URL ? "configurado" : "não configurado",
@@ -108,6 +138,8 @@ const startServer = async () => {
           process.env.SUPABASE_URL ? "✅ configurado" : "❌ não configurado"
         }`
       );
+      console.log(`\n🌐 CORS:`);
+      console.log(`   - Allowed Origins: ${allowedOrigins.join(', ')}`);
       console.log("\n================================\n");
     });
   } catch (error) {
@@ -129,4 +161,3 @@ process.on("SIGINT", () => {
 startServer();
 
 export default server;
-      
