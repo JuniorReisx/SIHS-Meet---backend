@@ -8,44 +8,18 @@ import { authRouter } from "./routes/auth.routes";
 import { meetingsConfirmedRouter } from "./routes/meetingsConfirmed.routes";
 import { meetingsPendingRouter } from "./routes/meetingsPending.routes";
 import { meetingsDeniedRouter } from "./routes/meetingsDenied.routes";
-import { meetingsTotalRouter } from "./routes/meetingsTotal.routes";
+import { meetingsTotalRouter } from "./routes/meetingsTotal.routes"; // ✅ ADICIONE ISSO
 
 dotenv.config();
 
 const server = express();
 
-// Configuração do CORS
-const allowedOrigins = [
-  'https://sihsmeeting.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.CORS_ORIGIN
-].filter(Boolean);
-
 server.use(
   cors({
-    origin: (origin, callback) => {
-      // Permite requisições sem origin (mobile apps, Postman)
-      if (!origin) return callback(null, true);
-      
-      // Permite origins na whitelist
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`❌ CORS bloqueado para origem: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: process.env.CORS_ORIGIN || "*",
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range']
   })
 );
-
-// ✅ REMOVA esta linha que está causando o erro:
-// server.options('*', cors());
-
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
@@ -71,10 +45,6 @@ server.get("/health", (req: Request, res: Response) => {
     message: "Servidor rodando",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    cors: {
-      allowedOrigins: allowedOrigins,
-      configured: !!process.env.CORS_ORIGIN
-    },
     services: {
       ldap: process.env.LDAP_URL ? "configurado" : "não configurado",
       supabase: process.env.SUPABASE_URL ? "configurado" : "não configurado",
@@ -82,7 +52,6 @@ server.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// Rotas
 server.use("/api/meetingsConfirmed", meetingsConfirmedRouter);
 server.use("/api/meetingsPending", meetingsPendingRouter);
 server.use("/api/meetingsDenied", meetingsDeniedRouter);
@@ -91,7 +60,6 @@ server.use("/api/admin", adminRouter);
 server.use("/api/users", userRouter);
 server.use("/api/ldap", authRouter);
 
-// 404 handler
 server.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -101,7 +69,6 @@ server.use((req: Request, res: Response) => {
   });
 });
 
-// Error handler
 server.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("❌ Erro não tratado:", err);
 
@@ -112,23 +79,23 @@ server.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 });
-
 const startServer = async () => {
   try {
     const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+    const HOST = '0.0.0.0'; // ✅ ADICIONE ISSO
 
-    server.listen(PORT, () => {
+    server.listen(PORT, HOST, () => { // ✅ ADICIONE HOST AQUI
       console.log("\n🚀 ================================");
       console.log("   SIHS Meeting Backend API");
       console.log("================================");
-      console.log(`\n📍 Server: http://localhost:${PORT}`);
+      console.log(`\n📍 Server: http://0.0.0.0:${PORT}`); // ✅ MUDE AQUI
       console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`\n🔌 Endpoints:`);
-      console.log(`   - Health Check: http://localhost:${PORT}/health`);
-      console.log(`   - Auth:         http://localhost:${PORT}/api/auth`);
-      console.log(`   - Admin:        http://localhost:${PORT}/api/admin`);
-      console.log(`   - Users:        http://localhost:${PORT}/api/users`);
-      console.log(`   - Meetings:     http://localhost:${PORT}/api/meetings`);
+      console.log(`   - Health Check: http://0.0.0.0:${PORT}/health`);
+      console.log(`   - Auth:         http://0.0.0.0:${PORT}/api/auth`);
+      console.log(`   - Admin:        http://0.0.0.0:${PORT}/api/admin`);
+      console.log(`   - Users:        http://0.0.0.0:${PORT}/api/users`);
+      console.log(`   - Meetings:     http://0.0.0.0:${PORT}/api/meetings`);
       console.log(`\n🔐 Services:`);
       console.log(
         `   - LDAP URL:     ${process.env.LDAP_URL || "❌ não configurado"}`
@@ -141,8 +108,6 @@ const startServer = async () => {
           process.env.SUPABASE_URL ? "✅ configurado" : "❌ não configurado"
         }`
       );
-      console.log(`\n🌐 CORS:`);
-      console.log(`   - Allowed Origins: ${allowedOrigins.join(', ')}`);
       console.log("\n================================\n");
     });
   } catch (error) {
@@ -164,3 +129,4 @@ process.on("SIGINT", () => {
 startServer();
 
 export default server;
+      
