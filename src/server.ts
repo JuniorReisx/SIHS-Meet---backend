@@ -30,7 +30,6 @@ server.get("/", (req: Request, res: Response) => {
     version: "1.0.0",
     endpoints: {
       health: "/health",
-      auth: "/api/auth",
       admin: "/api/admin",
       users: "/api/users",
       meetings: "/api/meetings",
