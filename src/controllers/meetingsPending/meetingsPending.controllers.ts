@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import { MeetingPending } from "../../models/meetingsPending.models";
+import { validateLocationOrRespond } from "../../utils/validateLocation";
+import { normalizeEquipment, validateEquipmentOrRespond } from "../../utils/equipment";
 
-import type { UpdateMeetingDeniedInput } from "../../types/auth.types";
+import type { UpdateMeetingPendingInput } from "../../types/auth.types";
 
 // ===== MEETING PENDING CONTROLLER =====
 export class MeetingPendingController {
@@ -15,6 +17,8 @@ export class MeetingPendingController {
         location,
         participants_count,
         description,
+        equipment,
+        other_equipment,
         responsible,
         responsible_department,
       } = req.body;
@@ -34,6 +38,11 @@ export class MeetingPendingController {
           message:
             "Required fields: title, meeting_date, start_time, end_time, location, participants_count, responsible, responsible_department",
         });
+      }
+
+      const equipmentError = validateEquipmentOrRespond(equipment);
+      if (equipmentError) {
+        return res.status(400).json({ success: false, message: equipmentError });
       }
 
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -59,6 +68,11 @@ export class MeetingPendingController {
         });
       }
 
+      const locationError = validateLocationOrRespond(location);
+      if (locationError) {
+        return res.status(400).json({ success: false, message: locationError });
+      }
+
       const meeting = await MeetingPending.create({
         title,
         meeting_date,
@@ -67,6 +81,8 @@ export class MeetingPendingController {
         location,
         participants_count,
         description,
+        equipment: normalizeEquipment(equipment),
+        other_equipment: other_equipment ?? null,
         responsible,
         responsible_department,
       });
@@ -157,6 +173,8 @@ export class MeetingPendingController {
         location,
         participants_count,
         description,
+        equipment,
+        other_equipment,
         responsible,
         responsible_department,
       } = req.body;
@@ -176,7 +194,7 @@ export class MeetingPendingController {
         });
       }
 
-      const updateData: UpdateMeetingDeniedInput = {};
+      const updateData: UpdateMeetingPendingInput = {};
 
       if (title !== undefined) updateData.title = title;
       if (meeting_date !== undefined) {
@@ -211,7 +229,13 @@ export class MeetingPendingController {
         updateData.end_time =
           end_time.length === 5 ? `${end_time}:00` : end_time;
       }
-      if (location !== undefined) updateData.location = location;
+      if (location !== undefined) {
+        const locationError = validateLocationOrRespond(location);
+        if (locationError) {
+          return res.status(400).json({ success: false, message: locationError });
+        }
+        updateData.location = location;
+      }
       if (participants_count !== undefined) {
         if (typeof participants_count !== "number" || participants_count < 0) {
           return res.status(400).json({
@@ -222,6 +246,14 @@ export class MeetingPendingController {
         updateData.participants_count = participants_count;
       }
       if (description !== undefined) updateData.description = description;
+      if (equipment !== undefined) {
+        const equipmentError = validateEquipmentOrRespond(equipment);
+        if (equipmentError) {
+          return res.status(400).json({ success: false, message: equipmentError });
+        }
+        updateData.equipment = normalizeEquipment(equipment);
+      }
+      if (other_equipment !== undefined) updateData.other_equipment = other_equipment;
       if (responsible !== undefined) updateData.responsible = responsible;
       if (responsible_department !== undefined)
         updateData.responsible_department = responsible_department;

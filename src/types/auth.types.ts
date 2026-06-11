@@ -136,6 +136,8 @@ export interface MeetingConfirmedTypes {
   location: string;
   participants_count: number;
   description?: string;
+  equipment: string[];
+  other_equipment?: string | null;
   responsible: string;
   responsible_department: string;
   created_at?: string;
@@ -150,6 +152,8 @@ export interface CreateMeetingConfirmedInput {
   location: string;
   participants_count: number;
   description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
   responsible: string;
   responsible_department: string;
 }
@@ -162,6 +166,8 @@ export interface UpdateMeetingConfirmedInput {
   location?: string;
   participants_count?: number;
   description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
   responsible?: string;
   responsible_department?: string;
 }
@@ -175,6 +181,8 @@ export interface MeetingPendingTypes {
   location: string;
   participants_count: number;
   description?: string;
+  equipment: string[];
+  other_equipment?: string | null;
   responsible: string;
   responsible_department: string;
   created_at?: string;
@@ -189,6 +197,8 @@ export interface CreateMeetingPendingInput {
   location: string;
   participants_count: number;
   description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
   responsible: string;
   responsible_department: string;
 }
@@ -201,6 +211,53 @@ export interface UpdateMeetingPendingInput {
   location?: string;
   participants_count?: number;
   description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
+  responsible?: string;
+  responsible_department?: string;
+}
+
+export interface MeetingDeniedTypes {
+  id: number;
+  title: string;
+  meeting_date: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  participants_count: number;
+  description?: string;
+  equipment: string[];
+  other_equipment?: string | null;
+  responsible: string;
+  responsible_department: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateMeetingDeniedInput {
+  title: string;
+  meeting_date: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  participants_count: number;
+  description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
+  responsible: string;
+  responsible_department: string;
+}
+
+export interface UpdateMeetingDeniedInput {
+  title?: string;
+  meeting_date?: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  participants_count?: number;
+  description?: string;
+  equipment?: string[];
+  other_equipment?: string | null;
   responsible?: string;
   responsible_department?: string;
 }

@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { MeetingDenied } from "../../models/meetingsDenied.models";
+import { validateLocationOrRespond } from "../../utils/validateLocation";
+import { normalizeEquipment, validateEquipmentOrRespond } from "../../utils/equipment";
 
 import type { UpdateMeetingDeniedInput } from "../../types/auth.types";
 
@@ -15,6 +17,8 @@ export class MeetingDeniedController {
         location,
         participants_count,
         description,
+        equipment,
+        other_equipment,
         responsible,
         responsible_department,
       } = req.body;
@@ -63,6 +67,16 @@ export class MeetingDeniedController {
         });
       }
 
+      const locationError = validateLocationOrRespond(location);
+      if (locationError) {
+        return res.status(400).json({ success: false, message: locationError });
+      }
+
+      const equipmentError = validateEquipmentOrRespond(equipment);
+      if (equipmentError) {
+        return res.status(400).json({ success: false, message: equipmentError });
+      }
+
       const meeting = await MeetingDenied.create({
         title,
         meeting_date,
@@ -71,6 +85,8 @@ export class MeetingDeniedController {
         location,
         participants_count,
         description,
+        equipment: normalizeEquipment(equipment),
+        other_equipment: other_equipment ?? null,
         responsible,
         responsible_department,
       });
@@ -164,6 +180,8 @@ export class MeetingDeniedController {
         location,
         participants_count,
         description,
+        equipment,
+        other_equipment,
         responsible,
         responsible_department,
       } = req.body;
@@ -222,7 +240,13 @@ export class MeetingDeniedController {
           end_time.length === 5 ? `${end_time}:00` : end_time;
       }
 
-      if (location !== undefined) updateData.location = location;
+      if (location !== undefined) {
+        const locationError = validateLocationOrRespond(location);
+        if (locationError) {
+          return res.status(400).json({ success: false, message: locationError });
+        }
+        updateData.location = location;
+      }
 
       if (participants_count !== undefined) {
         if (typeof participants_count !== "number" || participants_count < 0) {
@@ -235,6 +259,14 @@ export class MeetingDeniedController {
       }
 
       if (description !== undefined) updateData.description = description;
+      if (equipment !== undefined) {
+        const equipmentError = validateEquipmentOrRespond(equipment);
+        if (equipmentError) {
+          return res.status(400).json({ success: false, message: equipmentError });
+        }
+        updateData.equipment = normalizeEquipment(equipment);
+      }
+      if (other_equipment !== undefined) updateData.other_equipment = other_equipment;
       if (responsible !== undefined) updateData.responsible = responsible;
       if (responsible_department !== undefined)
         updateData.responsible_department = responsible_department;

@@ -9,6 +9,7 @@ import { meetingsConfirmedRouter } from "./routes/meetingsConfirmed.routes";
 import { meetingsPendingRouter } from "./routes/meetingsPending.routes";
 import { meetingsDeniedRouter } from "./routes/meetingsDenied.routes";
 import { meetingsTotalRouter } from "./routes/meetingsTotal.routes"; // ✅ ADICIONE ISSO
+import { migrateRoomLocations } from "./utils/roomMigration";
 
 dotenv.config();
 
@@ -80,6 +81,8 @@ server.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 const startServer = async () => {
   try {
+    await migrateRoomLocations();
+
     const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
     const HOST = '0.0.0.0'; // ✅ ADICIONE ISSO
 
